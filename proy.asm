@@ -1,5 +1,5 @@
 .global programa
-  .data
+.data
 input:   
   .string  "mapa.txt"
 output:
@@ -24,15 +24,11 @@ posicionY:
   .byte 0
 dir:
   .byte 0
-dece:
-  .byte 0
-uni:
-  .byte 0
 matriz:
   .string "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-solu:
+msgExito:
   .string "exito?"
-nosolu:
+msgError:
   .string "Error en el mapa, no hay salida?"
 kmino:
   .string ""
@@ -41,14 +37,14 @@ programa:
 #Inicio del segmento de codigo
 #INICIAN MACROS 
 .macro limpiar() #este macro limpia los registros t mas utilizados para evitar la redundancia de codigo
-add t0, zero, zero #vaciar registros
+add t0, zero, zero 
 add t1, zero, zero 
 add t2, zero, zero
 add t3, zero, zero
 add t4, zero, zero
 .end_macro	
 .macro limpiarA()
-add a0, zero, zero #vaciar registros
+add a0, zero, zero
 add a1, zero, zero 
 add a2, zero, zero
 add a3, zero, zero
@@ -58,29 +54,30 @@ add a6, zero, zero
 add a7, zero, zero
 .end_macro	
 .macro posicionEnArray()
+#Este macro obtiene la posicion en el array del mapeo lexico-gráfico
 li t1,10
-addi t3,t3,1 #sumar 1 para pasar de posicion a numero de celda
+addi t3,t3,1 
 div t4,t3,t1 
-add t5,a1,a2 #cargar posicion del kmino
+add t5,a1,a2 
 beq t4,t1,centena1 #validacion para matriz 10x10
 mul t6,t4,t1 #
 sub t0,t3,t6 #realizando reajuste para calcular unidades
-addi t4,t4,48 #convierte el numero en caracter
-sb t4,0(t5) #mete las decenas al kmino
+addi t4,t4,48 
+sb t4,0(t5)
 addi a2,a2,1
-addi t0,t0,48 #convierte el numero en caracter
-sb t0,1(t5) #guardar las unidades al kmino
+addi t0,t0,48 #ajuste para pasar de numero a char
+sb t0,1(t5) 
 addi a2,a2,1
 j salir1
 centena1:
-	li t1,'1' #carga el caracter 1
-	sb t1,0(t5) #guarda el 1 de centenas
-	li t1,'0' #carga el caracter 0
-	addi a2,a2,1
-	sb t1,1(t5) #inserta 0 en el kmino
-	addi a2,a2,1
-	sb t1,2(t5) #inserta 0 en el kmino
-	addi a2,a2,1
+li t1,'1' 
+sb t1,0(t5) 
+li t1,'0' 
+addi a2,a2,1
+sb t1,1(t5) 
+addi a2,a2,1
+sb t1,2(t5) 
+addi a2,a2,1
 salir1:
 .end_macro 
 
@@ -96,22 +93,22 @@ add t6,a0,t3 #obtiene la direccion de la pos exacta del robot
 lb t6,0(t6) #guardar en t6 el valor de la pared
 addi t6,t6,-48
 limpiar()
-hayDh:
+#existeD:
 li t5,8
-blt t6,t5,hayCh
+blt t6,t5,existeC
 sub t6,t6,t5
 li t1,1 #t1 pared D
-hayCh:
+existeC:
 li t5,4
-blt t6,t5,hayBh
+blt t6,t5,existeB
 sub t6,t6,t5
 li t2,1 #t2 pared C
-hayBh:
+existeB:
 li t5,2
-blt t6,t5,hayAh
+blt t6,t5,existeA
 sub t6,t6,t5
 li t3,1 #t3 pared B
-hayAh:
+existeA:
 li t5,1
 blt t6,t5,comprobarh
 li t4,1 #t4 pared A
@@ -139,7 +136,7 @@ esDh:
 	j validh
 errorh:
 	#direccion del robot no valida
-	j salirh
+	j salirVerificarPared
 validh:
 	add t5,a1,a2
 	addi a2,a2,1
@@ -148,7 +145,7 @@ validh:
 	addi t5,t5,1
 	li t3,45
 	sb t3,0(t5)
-salirh:
+salirVerificarPared:
 .end_macro 
 
 .macro leftShift()
@@ -156,38 +153,38 @@ limpiar()
 la t1,dir #obtiene variable que guarda la direccion del robot
 #comprobar que direccion esta viendo el robot
 li t6,'A'
-beq t6,a5,esAgi
+beq t6,a5,paredA1
 li t6,'B'
-beq t6,a5,esBgi
+beq t6,a5,paredB1
 li t6,'C'
-beq t6,a5,esCgi
+beq t6,a5,paredC1
 li t6,'D'
-beq t6,a5,esDgi
-j errorgi
-esAgi:
+beq t6,a5,paredD1
+j errorLeftShift
+paredA1:
 	li t6,'D' #si la direccion es A asigna la direccion D al girar
 	sb t6,0(t1) #asigna nueva direccion
 	mv a5,t6 #mueve a a5 la nueva direccion
-	j salirgi
-esBgi:
+	j salirLeftShift
+paredB1:
 	li t6,'A' #si la direccion es B asigna la direccion A al girar
 	sb t6,0(t1) #asigna nueva direccion
 	mv a5,t6 #mueve a a5 la nueva direccion
-	j salirgi
-esCgi:
+	j salirLeftShift
+paredC1:
 	li t6,'B' #si la direccion es C asigna la direccion B al girar
 	sb t6,0(t1) #asigna nueva direccion
 	mv a5,t6 #mueve a a5 la nueva direccion
-	j salirgi
-esDgi:
+	j salirLeftShift
+paredD1:
 	li t6,'C' #si la direccion es D asigna la direccion C al girar
 	sb t6,0(t1) #asigna nueva direccion
 	mv a5,t6 #mueve a a5 la nueva direccion
-	j salirgi
-errorgi:
+	j salirLeftShift
+errorLeftShift:
 	#direccion del robot no valida
-	j salirgi
-salirgi:
+	j salirLeftShift
+salirLeftShift:
 .end_macro 
 
 .macro rShift()
@@ -195,40 +192,66 @@ limpiar()
 la t1,dir #obtiene variable que guarda la direccion del robot
 #comprobar que direccion esta viendo el robot
 li t6,'A'
-beq t6,a5,esAgd
+beq t6,a5,paredA2
 li t6,'B'
-beq t6,a5,esBgd
+beq t6,a5,paredB2
 li t6,'C'
-beq t6,a5,esCgd
+beq t6,a5,paredC2
 li t6,'D'
-beq t6,a5,esDgd
-j errorgd
-esAgd:
-	li t6,'B' #si la direccion es A asigna la direccion B al girar
-	sb t6,0(t1) #asigna nueva direccion
-	mv a5,t6 #mueve a a5 la nueva direccion
-	j salirgd 
-esBgd:
-	li t6,'C' #si la direccion es B asigna la direccion C al girar
-	sb t6,0(t1) #asigna nueva direccion
-	mv a5,t6 #mueve a a5 la nueva direccion
-	j salirgd
-esCgd:
-	li t6,'D' #si la direccion es C asigna la direccion D al girar
-	sb t6,0(t1) #asigna nueva direccion
-	mv a5,t6 #mueve a a5 la nueva direccion
-	j salirgd
-esDgd:
-	li t6,'A' #si la direccion es D asigna la direccion A al girar
-	sb t6,0(t1) #asigna nueva direccion
-	mv a5,t6 #mueve a a5 la nueva direccion
-	j salirgd
-errorgd:
+beq t6,a5,paredD2
+j errorRightShift
+paredA2:
+	li t6,'B'
+	sb t6,0(t1) 
+	mv a5,t6 
+	j salirRightShift 
+paredB2:
+	li t6,'C' 
+	sb t6,0(t1) 
+	mv a5,t6 
+	j salirRightShift
+paredC2:
+	li t6,'D' 
+	sb t6,0(t1) 
+	mv a5,t6 
+	j salirRightShift
+paredD2:
+	li t6,'A' 
+	sb t6,0(t1) 
+	mv a5,t6 
+	j salirRightShift
+errorRightShift:
 	#direccion del robot no valida
-	j salirgd
-salirgd:
+	j salirRightShift
+salirRightShift:
 .end_macro 
-
+.macro reconNumber() #Obtiene el valor ascii de un elemento en el string del output
+	getCharFromNumber(t0) #obtiene el caracter en la posicion del kmino
+	mv a2,t4 #Guarda el valor del caracter en a4
+	addi t0, t0, 1 #avanza la posicion del kmino
+	getCharFromNumber(t0) #obtiene el caracter en la posicion del kmino
+	mv a3,t4 #Guarda el valor del caracter en a5
+	addi a2,a2,-48 #Obtiene el valor numerico del caracter
+	addi a3,a3,-48 #Obtiene el valor numerico del caracter
+	li a5,1 #a5 igual a 1 
+	bne a2,a5,decenasrn #si el primer digito no es uno, entonces no hay posibilidad de valor 100
+	bnez a3,decenasrn #si el segundo numero no es 0, entonces no hay posibilidad de valor 100
+	addi t0, t0, 1 #avanza la posicion del kmino
+	getCharFromNumber(t0) #obtiene el caracter en la posicion del kmino
+	mv a5,t4 #Guarda el valor del caracter en a5
+	addi a5,a5,-48 #Obtiene el valor numerico del caracter
+	bnez a5,nocentrn #Si el 3 digito no es un 0, entonces hay posibilidad de valor 100
+	addi a6,zero,100 #Si si es 0, entonces se trataba del numero 100
+	j salirrn
+nocentrn:
+	addi t0,t0,-1 #revierte el cambio de posicion por posible valor 100
+decenasrn: #Asignar el valor de 2 digitos a a6
+	li a5,10
+	mul a4,a5,a2 #se obtiene el valor de las centenas
+	add a6,zero,a4 #se agregan las centenas al resultado
+	add a6,a6,a3 #Se agregan las unidades al resultado
+salirrn:
+.end_macro
 .macro avanzar()
 limpiar()
 add t5, zero, zero
@@ -293,13 +316,13 @@ ganara:
 	limpiar()
 	add t5, zero, zero
 	add t6, zero, zero
-	la t1,solu #prepara el puntero de la cadena de ganar
+	la t1,msgExito #prepara el puntero de la cadena de ganar
 	j imprimira
 perdera:
 	limpiar()
 	add t5, zero, zero
 	add t6, zero, zero
-	la t1,nosolu #prepara el puntero de la cadena de perder
+	la t1,msgError #prepara el puntero de la cadena de perder
 imprimira:
 	add t2,a1,a2 #cargar la direccion del kmino
 	li t4,'?'
@@ -335,33 +358,6 @@ salirimp:
 	
 salira:
 .end_macro 
-.macro reconNumber() #Obtiene le valor numerico a partir de una posicion en el kmino
-	getCharFromNumber(t0) #obtiene el caracter en la posicion del kmino
-	mv a2,t4 #Guarda el valor del caracter en a4
-	addi t0, t0, 1 #avanza la posicion del kmino
-	getCharFromNumber(t0) #obtiene el caracter en la posicion del kmino
-	mv a3,t4 #Guarda el valor del caracter en a5
-	addi a2,a2,-48 #Obtiene el valor numerico del caracter
-	addi a3,a3,-48 #Obtiene el valor numerico del caracter
-	li a5,1 #a5 igual a 1 
-	bne a2,a5,decenasrn #si el primer digito no es uno, entonces no hay posibilidad de valor 100
-	bnez a3,decenasrn #si el segundo numero no es 0, entonces no hay posibilidad de valor 100
-	addi t0, t0, 1 #avanza la posicion del kmino
-	getCharFromNumber(t0) #obtiene el caracter en la posicion del kmino
-	mv a5,t4 #Guarda el valor del caracter en a5
-	addi a5,a5,-48 #Obtiene el valor numerico del caracter
-	bnez a5,nocentrn #Si el 3 digito no es un 0, entonces hay posibilidad de valor 100
-	addi a6,zero,100 #Si si es 0, entonces se trataba del numero 100
-	j salirrn
-nocentrn:
-	addi t0,t0,-1 #revierte el cambio de posicion por posible valor 100
-decenasrn: #Asignar el valor de 2 digitos a a6
-	li a5,10
-	mul a4,a5,a2 #se obtiene el valor de las centenas
-	add a6,zero,a4 #se agregan las centenas al resultado
-	add a6,a6,a3 #Se agregan las unidades al resultado
-salirrn:
-.end_macro
 	
 .macro getCharFromNumber(%pos) #obtiene el caracter en la posicion del kmino
 	#Guarda en t2 el resultado del puntero del kmino mas la posicion que se consulta
@@ -502,42 +498,41 @@ limpiar()
 add t5, zero, zero
 add t6, zero, zero
 limpiarA()
-la a0,matriz #carga el inicio de la matriz
-la a1,kmino #carga la ubicacion del kmino para apuntar los pasos
-li a2,0 #valor de la posicon donde se sobre escribe el kmino
-la a7,posicionX #carga la ubicacion de la posicion en x del robot
+la a0,matriz #inicio de la matriz
+la a1,kmino 
+li a2,0 #empieza a escribir desde la posicion 0 
+la a7,posicionX 
 lb a3,0(a7) #guarda su valor en a3 para su uso
-la a7,posicionY #carga la ubicacion de la posicion en x del robot
-lb a4,0(a7) #guarda su valor en a4 para su uso
-la a7,dir #carga la ubicacion de la direccion del robot
-lb a5,0(a7) #guarda su valor en a5 para su uso
-la a7,cols #carga la ubicacion de la cant de columnas
-lb a6,0(a7) #guarda su valor en a6 para su uso
-la t0,rows #carga la ubicacion de la cant de rows
-lb a7, 0(t0) #guarda su valor en a7 pasa su uso
-
+la a7,posicionY 
+lb a4,0(a7) 
+la a7,dir #cargar la direccion a la que se está viendo
+lb a5,0(a7) 
+la a7,cols 
+lb a6,0(a7) 
+la t0,rows 
+lb a7, 0(t0) 
 buscar:
-	leftShift() #gira a la derecha
-	verificarPared() #verificar si hay muro
+	#aplicar el algoritmo para encontrar salida
+	leftShift() 
+	verificarPared() 
 	li t1,1
-	beq t1,t0,avan #si no hay muro avanza
-	rShift() #si hay gira a la izquierda
-	verificarPared() #verificar si hay muro
+	beq t1,t0,avan #comprobando si una pared existe, de lo contrario gira
+	rShift() 
+	verificarPared() 
 	li t1,1
-	beq t1,t0,avan #si no hay muro avanza
-	rShift() #si hay gira a la izquierda
-	verificarPared() #verificar si hay muro
+	beq t1,t0,avan #comprobando si una pared existe, de lo contrario gira
+	rShift() 
+	verificarPared() 
 	li t1,1
-	beq t1,t0,avan #si no hay muro avanza
-	rShift() #si hay gira a la izquierda
-	verificarPared() #verificar si hay muro
+	beq t1,t0,avan #comprobando si una pared existe, de lo contrario gira
+	rShift() 
+	verificarPared() 
 	li t1,1
-	beq t1,t0,avan #si no hay muro avanza
-	#si t0 es 1, no se puede avanzar
+	beq t1,t0,avan #comprobando si una pared existe, de lo contrario gira
 	limpiar()
 	add t5, zero, zero
 	add t6, zero, zero
-	la t1,nosolu #prepara el puntero de la cadena de perder
+	la t1,msgError #prepara el puntero de la cadena de perder
 	add t2,a1,a2 #cargar la direccion del kmino
 	li t4,'?'
 printSol:
