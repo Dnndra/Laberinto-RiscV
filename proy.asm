@@ -288,11 +288,11 @@ avanzarE:
 	j salira
 avanzarBY: #revierte si se desborda hacia arriba
 	addi a4,a4,-1
-	j avanzarB
+	j avanzarBorde
 avanzarBX: #revierte si se desborda hacia la derecha
 	addi a3,a3,-1
-	j avanzarB
-avanzarB:
+	j avanzarBorde
+avanzarBorde:
 	#cargar posiciones X, Y e insertarlas
 	addi t0, zero, 1
 	la t5,posicionX
